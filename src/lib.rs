@@ -13,7 +13,7 @@ pub mod fbot_fira {
     const ROBOT_SPEED: f64 = 20.0;
 
     #[derive(Debug)]
-    pub enum Teams{
+    pub enum Team{
         Yellow,
         Blue
     }
@@ -57,7 +57,7 @@ pub mod fbot_fira {
         let mut buf = [0; 1024];
 
         let (len, addr) = socket.recv_from(&mut buf).unwrap();
-        println!("{:?}", buf);
+
         let env = deserialize_env(&buf[..len]).unwrap();
 
         env.frame
@@ -98,14 +98,8 @@ pub mod fbot_fira {
     }
 
     pub fn get_yellow_robot(id: &u32) -> Option<fira_protos::Robot> {
-        println!("A:");
         if let Some(frame) = get_frame() {
-
-            println!("Frame: {:?}", frame);
-
             let mut ret = None;
-
-            println!("Ret {:?}", ret);
 
             for robot in frame.robots_yellow {
                 if robot.robot_id == *id {
@@ -116,7 +110,6 @@ pub mod fbot_fira {
             ret
 
         } else { 
-            println!("None:");
             None 
         }
     }
@@ -124,11 +117,11 @@ pub mod fbot_fira {
     #[derive(Debug)]
     pub struct Robot {
         id: u32,
-        team: Teams,
+        team: Team,
     }
 
     impl Robot {
-        pub fn new(id: u32, team: Teams) -> Self {
+        pub fn new(id: u32, team: Team) -> Self {
             Self {
                 id: id,
                 team: team,
@@ -136,15 +129,13 @@ pub mod fbot_fira {
          }
 
         fn get_robot(&self) -> fira_protos::Robot{
-            println!("Team: {:?}", self.team);
             match self.team {
-                Teams::Yellow => get_yellow_robot(&self.id).unwrap(),
-                Teams::Blue => get_blue_robot(&self.id).unwrap()
+                Team::Yellow => get_yellow_robot(&self.id).unwrap(),
+                Team::Blue => get_blue_robot(&self.id).unwrap()
             }
         }
 
         pub fn get_x(&self) -> f64 {
-            println!("Robot: {:?}", self.get_robot());
             self.get_robot().x
         }
 
@@ -154,6 +145,13 @@ pub mod fbot_fira {
 
         pub fn get_orientation(&self) -> f64 {
             self.get_robot().orientation
+        }
+
+        pub fn get_control_point(&self) -> (f64, f64) {
+            let (x, y, orientation) = (self.get_x(), self.get_y(), self.get_orientation());
+
+
+            (x + 0.5, y + 0.5)
         }
 
         fn set_speed(&self, wheel_left: f64, wheel_right: f64) {
@@ -186,6 +184,7 @@ pub mod fbot_fira {
                 let target_orientation = (diff_y/diff_x).atan();
 
                 // ele tem problema ao calcular a diferença entre os quadrantes 1 2 e 3 4, ele não rataciona pelo menor caminho
+                
                 if diff_x < 0.0 {
                     if goalie_orientation > 0.0 {
                         goalie_orientation -= std::f64::consts::PI;
@@ -197,7 +196,6 @@ pub mod fbot_fira {
                 let err = target_orientation - goalie_orientation;
                 let velocidade = err * ORIENTATION_KP;
                 
-                println!("{:?}", velocidade);
                 self.set_speed(-velocidade + ROBOT_SPEED, velocidade + ROBOT_SPEED);
             };
 
