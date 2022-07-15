@@ -115,21 +115,24 @@ pub mod fbot_fira {
     }
     
     #[derive(Debug)]
-    #[derive(Debug)]
-    struct Point{
+    struct Point {
         x: f64,
         y: f64
     }
     
     pub fn get_ball_cp() -> (f64, f64){
         let ball = get_ball();
-        
-        let orientation_to_goal = ball.point.orientation_to(GOAL_POINT);
-        
-        let cp_x = orientation.cos() * CP
-        let cp_y = orientation.sin() * CP
+        let ball_point = Point::new(ball.x, ball.y);
 
-        (x + cp_x, y + cp_y)
+        let GOAL_POINT = Point::new(-0.75, 0.0);
+        let CP = 0.5;
+        
+        let orientation_to_goal = ball_point.orientation_to(&GOAL_POINT);
+        
+        let cp_x = orientation_to_goal.cos() * CP;
+        let cp_y = orientation_to_goal.sin() * CP;
+
+        (ball.x + cp_x, ball.y + cp_y)
     }
 
     impl Point {
@@ -189,15 +192,16 @@ pub mod fbot_fira {
         }
 
         pub fn get_control_point(&self) -> (f64, f64) {
+            let CP = 0.1;
             let (x, y, orientation) = (self.get_x(), self.get_y(), self.get_orientation());
 
-            let cp_x = orientation.cos() * CP
-            let cp_y = orientation.sin() * CP
+            let cp_x = orientation.cos() * CP;
+            let cp_y = orientation.sin() * CP;
 
             (x + cp_x, y + cp_y)
         }
 
-        fn set_speed(&self, wheel_left: f64, wheel_right: f64) {
+        pub fn set_speed(&self, wheel_left: f64, wheel_right: f64) {
             let commands = fira_protos::Commands {
                 robot_commands: vec![
                     fira_protos::Command {
@@ -219,7 +223,7 @@ pub mod fbot_fira {
 
                 let dist = (diff_x*diff_x + diff_y*diff_y).sqrt();
 
-                if dist < 0.1 {
+                if dist < 0.08 {
                     break;
                 }
 
@@ -242,13 +246,9 @@ pub mod fbot_fira {
                 self.set_speed(-velocidade + ROBOT_SPEED, velocidade + ROBOT_SPEED);
             };
 
-            self.set_speed(0.0, 0.0);
+            // self.set_speed(0.0, 0.0);
 
         }
     }
-    
-    
-    
-
 }
 

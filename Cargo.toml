@@ -10,6 +10,9 @@ bytes = "1.1.0"
 prost = "0.10"
 prost-types = "0.10"
 
+flo_curves = "0.1.0"
+plotlib = "0.5.1"
+
 
 [build-dependencies]
 prost-build = "0.10.4"
