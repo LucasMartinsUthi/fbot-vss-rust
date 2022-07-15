@@ -115,9 +115,21 @@ pub mod fbot_fira {
     }
     
     #[derive(Debug)]
+    #[derive(Debug)]
     struct Point{
         x: f64,
         y: f64
+    }
+    
+    pub fn get_ball_cp() -> (f64, f64){
+        let ball = get_ball();
+        
+        let orientation_to_goal = ball.point.orientation_to(GOAL_POINT);
+        
+        let cp_x = orientation.cos() * CP
+        let cp_y = orientation.sin() * CP
+
+        (x + cp_x, y + cp_y)
     }
 
     impl Point {
@@ -128,14 +140,14 @@ pub mod fbot_fira {
             }
         }
 
-        pub fn orientation_to(&self, p: Point) -> f64 {
+        pub fn orientation_to(&self, p: &Point) -> f64 {
             let x = p.x - self.x;
             let y = p.y - self.y;
 
             y.atan2(x)
         }
 
-        pub fn distance_to(&self, p: Point) -> f64 {
+        pub fn distance_to(&self, p: &Point) -> f64 {
             let x = p.x - self.x;
             let y = p.y - self.y;
 
@@ -179,8 +191,10 @@ pub mod fbot_fira {
         pub fn get_control_point(&self) -> (f64, f64) {
             let (x, y, orientation) = (self.get_x(), self.get_y(), self.get_orientation());
 
+            let cp_x = orientation.cos() * CP
+            let cp_y = orientation.sin() * CP
 
-            (x + 0.5, y + 0.5)
+            (x + cp_x, y + cp_y)
         }
 
         fn set_speed(&self, wheel_left: f64, wheel_right: f64) {
