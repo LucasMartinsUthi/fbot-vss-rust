@@ -113,6 +113,35 @@ pub mod fbot_fira {
             None 
         }
     }
+    
+    #[derive(Debug)]
+    struct Point{
+        x: f64,
+        y: f64
+    }
+
+    impl Point {
+        pub fn new(x: f64, y: f64) -> Self {
+            Self {
+                x: x,
+                y: y
+            }
+        }
+
+        pub fn orientation_to(&self, p: Point) -> f64 {
+            let x = p.x - self.x;
+            let y = p.y - self.y;
+
+            y.atan2(x)
+        }
+
+        pub fn distance_to(&self, p: Point) -> f64 {
+            let x = p.x - self.x;
+            let y = p.y - self.y;
+
+            (x*x + y*y).sqrt()
+        }
+    }
 
     #[derive(Debug)]
     pub struct Robot {
@@ -203,6 +232,8 @@ pub mod fbot_fira {
 
         }
     }
+    
+    
     
 
 }
