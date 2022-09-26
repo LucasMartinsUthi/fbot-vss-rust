@@ -26,6 +26,14 @@ impl Point {
         }
     }
 
+    pub fn x(&self) -> f64 {
+        self.x
+    }
+
+    pub fn y(&self) -> f64 {
+        self.y
+    }
+
     pub fn orientation_to(&self, p: &Point) -> f64 {
         let x = p.x - self.x;
         let y = p.y - self.y;
@@ -200,7 +208,7 @@ impl Ball {
         Point::new(self.x(), self.y())
     }
 
-    pub fn control_point(&self) -> (f64, f64){
+    pub fn control_point(&self) -> Point{
         let ball = ball();
         let ball_point = Point::new(ball.x, ball.y);
     
@@ -212,7 +220,8 @@ impl Ball {
         let cp_x = orientation_to_goal.cos() * CP;
         let cp_y = orientation_to_goal.sin() * CP;
     
-        (ball.x + cp_x, ball.y + cp_y)
+        Point::new(ball.x + cp_x, ball.y + cp_y)
+        
     }
 }
 

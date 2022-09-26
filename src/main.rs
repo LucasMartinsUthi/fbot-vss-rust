@@ -1,4 +1,4 @@
-use fbot_vss_rust::{Robot, Team, Ball};
+use fbot_vss_rust::{Robot, Team, Ball, Point};
 use flo_curves::{bezier::Curve, Coord2, BezierCurve};
 use std::{thread, time};
 
@@ -13,7 +13,7 @@ fn main() {
     let curve = Curve {
         start_point: Coord2 (goalie.x(), goalie.y()),
         end_point: Coord2 (ball.x(), ball.y()),
-        control_points: (Coord2 (cp_goalie.0, cp_goalie.1), Coord2 (cp_ball.0, cp_ball.1))
+        control_points: (Coord2 (cp_goalie.x(), cp_goalie.y()), Coord2 (cp_ball.x(), cp_ball.y()) )
     };
 
     for i in 0..50 { 
@@ -22,7 +22,8 @@ fn main() {
         let point = curve.point_at_pos(pos);
         let (x, y) = (point.0, point.1);
 
-        goalie.go_to(x, y);
+        //TODO async await
+        goalie.go_to(Point::new(x, y));
     }
 
     goalie.set_speed(1000.0, 1000.0);
