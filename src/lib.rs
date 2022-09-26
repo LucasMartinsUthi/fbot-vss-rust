@@ -1,10 +1,10 @@
 use fbot_rust_client::fira_protos;
 use fbot_rust_client::{ball, yellow_robot, blue_robot};
 
-const ORIENTATION_KP: f64 = 10.0;
+const ORIENTATION_KP: f64 = 20.0;
 const ROBOT_SPEED: f64 = 20.0;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Team{
     Yellow,
     Blue
@@ -13,7 +13,7 @@ pub enum Team{
 // TODO
 // Implement cord funcitons inside point
 #[derive(Debug)]
-struct Point {
+pub struct Point {
     x: f64,
     y: f64
 }
@@ -74,22 +74,32 @@ impl Robot {
         self.robot().orientation
     }
 
-    pub fn control_point(&self) -> (f64, f64) {
-        let CP = 0.1;
-        let (x, y, orientation) = (self.x(), self.y(), self.orientation());
-
-        let cp_x = orientation.cos() * CP;
-        let cp_y = orientation.sin() * CP;
-
-        (x + cp_x, y + cp_y)
+    pub fn reverse_orientation(&self) -> f64 {
+        self.robot().orientation + std::f64::consts::PI
     }
 
+    pub fn point(&self) -> Point {
+        Point::new(self.x(), self.y())
+    }
+
+    pub fn control_point(&self) -> Point {
+        let cp = 1.0;
+        let (x, y, orientation) = (self.x(), self.y(), self.orientation());
+
+        let cp_x = orientation.cos() * cp;
+        let cp_y = orientation.sin() * cp;
+
+        Point::new(x + cp_x, y + cp_y)
+    }
+
+    // TODO
+    // Extrar a logica de envio de comandos para outro ponto
     pub fn set_speed(&self, wheel_left: f64, wheel_right: f64) {
         let commands = fira_protos::Commands {
             robot_commands: vec![
                 fira_protos::Command {
                     id: 0,
-                    yellowteam: true,
+                    yellowteam: self.team == Team::Yellow,
                     wheel_left: wheel_left,
                     wheel_right: wheel_right,
                 },
@@ -99,38 +109,73 @@ impl Robot {
         fbot_rust_client::send_command(commands);
     }
 
-    pub fn go_to(&self, target_x: f64, target_y:f64) {
-        loop {
-            let diff_x = target_x - self.x();
-            let diff_y = target_y - self.y();
+    pub fn go_to(&self, target_point: Point) {
+        
+        // Se o Robo estiver muito proximo do ponto, nao faz nada
+        if self.point().distance_to(&target_point) < 0.1 {
+            self.set_speed(0.0, 0.0);
+            return;
+        }
 
-            let dist = (diff_x*diff_x + diff_y*diff_y).sqrt();
+        let target_angle = self.point().orientation_to(&target_point);
+        let robot_angle = self.orientation();
+        
+        let mut angle_error = target_angle - robot_angle;
 
-            if dist < 0.08 {
-                break;
-            }
+        // Normaliza o angulo
+        if angle_error > std::f64::consts::PI {
+            angle_error -= 2.0 * std::f64::consts::PI;
+        } else if angle_error < -std::f64::consts::PI {
+            angle_error += 2.0 * std::f64::consts::PI;
+        }
 
-            let mut goalie_orientation = self.orientation();
-            let target_orientation = (diff_y/diff_x).atan();
+        // Calcula a velocidade angular
+        let angular_speed = angle_error * ORIENTATION_KP;
 
-            // ele tem problema ao calcular a diferença entre os quadrantes 1 2 e 3 4, ele não rataciona pelo menor caminho
-            
-            if diff_x < 0.0 {
-                if goalie_orientation > 0.0 {
-                    goalie_orientation -= std::f64::consts::PI;
-                } else {
-                    goalie_orientation += std::f64::consts::PI;
-                }
-            }
+        // Calculata velocidade das rodas
+        let wheel_left = ROBOT_SPEED - angular_speed;
+        let wheel_right = ROBOT_SPEED + angular_speed;
 
-            let err = target_orientation - goalie_orientation;
-            let velocidade = err * ORIENTATION_KP;
-            
-            self.set_speed(-velocidade + ROBOT_SPEED, velocidade + ROBOT_SPEED);
+        // Send command
+        self.set_speed(wheel_left, wheel_right);
+    }
+
+    pub fn go_to2(&self, target_point: Point) {
+        
+        // Se o Robo estiver muito proximo do ponto, nao faz nada
+        if self.point().distance_to(&target_point) < 0.05 {
+            self.set_speed(0.0, 0.0);
+            return;
+        }
+
+        let target_angle = self.point().orientation_to(&target_point);
+        let robot_angle = self.orientation();
+        let robot_angle_reverse = self.reverse_orientation();
+        
+        let angle_error = target_angle - robot_angle;
+        let angle_error_reverse = target_angle - robot_angle_reverse;
+
+        let (mut smallest_angle_error, speed) = if angle_error.abs() < angle_error_reverse.abs() {
+            (angle_error, ROBOT_SPEED)
+        } else {
+            (angle_error_reverse, -ROBOT_SPEED)
         };
 
-        // self.set_speed(0.0, 0.0);
+        // Normaliza o angulo
+        if smallest_angle_error > std::f64::consts::PI {
+            smallest_angle_error -= 2.0 * std::f64::consts::PI;
+        } else if smallest_angle_error < -std::f64::consts::PI {
+            smallest_angle_error += 2.0 * std::f64::consts::PI;
+        }
+        
+        let angular_speed = smallest_angle_error * ORIENTATION_KP;
 
+        // Calcular velocidade das rodas
+        let wheel_left = speed - angular_speed;
+        let wheel_right = speed + angular_speed;
+
+        // Envia Comando
+        self.set_speed(wheel_left, wheel_right);
     }
 }
 
@@ -149,6 +194,10 @@ impl Ball {
 
     pub fn y(&self) -> f64 {
         ball().y
+    }
+
+    pub fn point(&self) -> Point {
+        Point::new(self.x(), self.y())
     }
 
     pub fn control_point(&self) -> (f64, f64){

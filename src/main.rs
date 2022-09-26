@@ -16,7 +16,7 @@ fn main() {
         control_points: (Coord2 (cp_goalie.0, cp_goalie.1), Coord2 (cp_ball.0, cp_ball.1))
     };
 
-    for i in 0..20 { 
+    for i in 0..50 { 
         let pos: f64 = i as f64 / 20.0;
         
         let point = curve.point_at_pos(pos);
@@ -25,9 +25,9 @@ fn main() {
         goalie.go_to(x, y);
     }
 
-    goalie.set_speed(100.0, 100.0);
+    goalie.set_speed(1000.0, 1000.0);
 
-    thread::sleep(time::Duration::from_millis(300));
+    thread::sleep(time::Duration::from_millis(200));
 
     goalie.set_speed(0.0, 0.0);
 }
